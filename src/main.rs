@@ -1,40 +1,59 @@
-use std::process::Command;
 use clap::Parser;
-
+use std::process::Command;
 
 #[derive(Parser, Clone)]
 pub struct Settings {
     #[arg(long)]
-    pub ip: String,
+    pub key_path: String,
 
     #[arg(long)]
-    pub port: Option<u32>,
+    pub ssh_port: String,
+
+    #[arg(long)]
+    pub local_port: u32,
+
+    #[arg(long)]
+    pub remote_host: String,
+
+    #[arg(long)]
+    pub remote_port: u32,
 
     #[arg(long)]
     pub username: String,
+
+    #[arg(long)]
+    pub server: String,
 }
 
 fn main() {
     let settings = Settings::parse();
 
-    let pid = ssh(&settings).unwrap();
+    let pid = ssh(&settings);
 
     println!("ssh complete. Pid = {pid}");
 }
 
-fn ssh(Settings { ip, port, username }: &Settings) -> Result<u32, String> {
-    let port = if port.is_some() {
-        format!(":{}", port.unwrap())
-    } else {
-        String::new()
-    };
-
+fn ssh(
+    Settings {
+        key_path,
+        ssh_port,
+        local_port,
+        remote_host,
+        remote_port,
+        username,
+        server,
+    }: &Settings,
+) -> u32 {
     let mut child = Command::new("ssh")
-        .arg("-Y")
-        .arg(format!("{}@{}{}", username, ip, port))
-        .spawn().expect("Failed to start ssh tunnel");
+        .arg("-i")
+        .arg(key_path)
+        .arg("-p")
+        .arg(ssh_port)
+        .arg("-L")
+        .arg(format!("{local_port}:{remote_host}:{remote_port}"))
+        .arg(format!("{}@{}", username, server))
+        .spawn()
+        .expect("Failed to start ssh tunnel");
 
-    Ok(child.id())
+    child.id()
 }
-
-

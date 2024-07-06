@@ -44,7 +44,7 @@ fn ssh(
         server,
     }: &Settings,
 ) -> u32 {
-    let mut child = Command::new("ssh")
+    let child = Command::new("ssh")
         .arg("-i")
         .arg(key_path)
         .arg("-p")
